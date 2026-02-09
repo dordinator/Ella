@@ -1,0 +1,12 @@
+# Original photos (already copied to images/ with clean names)
+*.JPG
+*.PNG
+*.jpg
+*.png
+
+# Keep the images folder
+!images/
+!images/*
+
+# macOS
+.DS_Store
