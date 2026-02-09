@@ -292,6 +292,138 @@
       color: #bbb;
     }
 
+    /* ========== BE MY VALENTINE SCREEN ========== */
+    .be-my-valentine-screen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(135deg, #1a0a0a 0%, #2d0a0a 30%, #1a0a0a 60%, #0d0507 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 75;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1s ease;
+    }
+
+    .be-my-valentine-screen.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .bmv-content {
+      text-align: center;
+      z-index: 10;
+      padding: 20px;
+    }
+
+    .bmv-question {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(32px, 8vw, 70px);
+      color: #e8a0a0;
+      text-shadow: 0 0 40px rgba(200, 80, 80, 0.3), 0 0 80px rgba(200, 80, 80, 0.1);
+      line-height: 1.3;
+      margin-bottom: 50px;
+    }
+
+    .bmv-buttons {
+      display: flex;
+      gap: 30px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .bmv-btn {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(18px, 4vw, 28px);
+      padding: 14px 50px;
+      border: 2px solid;
+      border-radius: 8px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+      background: none;
+    }
+
+    .bmv-btn-yes {
+      color: #e8a0a0;
+      border-color: rgba(232, 160, 160, 0.5);
+    }
+
+    .bmv-btn-yes:hover {
+      background: rgba(232, 160, 160, 0.15);
+      border-color: #e8a0a0;
+      transform: scale(1.05);
+    }
+
+    .bmv-btn-no {
+      color: #886060;
+      border-color: rgba(136, 96, 96, 0.3);
+      font-size: clamp(14px, 2.5vw, 20px);
+      padding: 10px 30px;
+    }
+
+    .bmv-btn-no:hover {
+      border-color: rgba(136, 96, 96, 0.5);
+    }
+
+    .wrong-answer-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 80;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .wrong-answer-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .wrong-answer-text {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(40px, 10vw, 90px);
+      color: #e8a0a0;
+      text-align: center;
+      opacity: 0;
+      line-height: 1.3;
+      text-shadow: 0 0 40px rgba(200, 80, 80, 0.3);
+    }
+
+    .wrong-answer-text .line1 {
+      display: block;
+      margin-bottom: 15px;
+    }
+
+    .wrong-answer-text .line2 {
+      display: block;
+    }
+
+    @keyframes wrongFlash {
+      0% { opacity: 0; transform: scale(0.5); }
+      8% { opacity: 1; transform: scale(0.5); }
+      20% { opacity: 1; transform: scale(1.0); }
+      35% { opacity: 1; transform: scale(1.0); }
+      42% { opacity: 1; transform: scale(0.5); }
+      55% { opacity: 1; transform: scale(0.5); }
+      67% { opacity: 1; transform: scale(1.0); }
+      80% { opacity: 1; transform: scale(1.0); }
+      90% { opacity: 0.5; transform: scale(1.0); }
+      100% { opacity: 0; transform: scale(1.0); }
+    }
+
+    .wrong-answer-text.flash {
+      animation: wrongFlash 5s ease forwards;
+    }
+
     /* ========== VALENTINE SCREEN ========== */
     .valentine-screen {
       position: fixed;
@@ -639,7 +771,26 @@
     </div>
   </div>
 
-  <!-- STEP 3: Valentine's screen -->
+  <!-- STEP 3: Be My Valentine? -->
+  <div class="be-my-valentine-screen" id="beMyValentineScreen">
+    <div class="bmv-content">
+      <div class="bmv-question">Will you be my<br>Valentine?</div>
+      <div class="bmv-buttons">
+        <button class="bmv-btn bmv-btn-yes" onclick="handleYes()">Yes</button>
+        <button class="bmv-btn bmv-btn-no" id="noBtn" onclick="handleNo()">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wrong answer overlay -->
+  <div class="wrong-answer-overlay" id="wrongAnswerOverlay">
+    <div class="wrong-answer-text" id="wrongAnswerText">
+      <span class="line1">that is the wrong answer...</span>
+      <span class="line2">try again</span>
+    </div>
+  </div>
+
+  <!-- STEP 4: Valentine's screen -->
   <div class="valentine-screen" id="valentineScreen">
     <div class="hearts-container" id="heartsContainer"></div>
     <div class="valentine-content">
@@ -726,7 +877,7 @@
 
         setTimeout(() => {
           document.getElementById('captchaOverlay').classList.add('hidden');
-          showValentine();
+          showBeMyValentine();
         }, 1800);
       } else {
         document.getElementById('errorMsg').classList.add('show');
@@ -737,6 +888,45 @@
         container.offsetHeight; // trigger reflow
         container.style.animation = 'shake 0.5s ease';
       }
+    }
+
+    // ========== Be My Valentine ==========
+    function showBeMyValentine() {
+      const screen = document.getElementById('beMyValentineScreen');
+      screen.classList.add('active');
+      document.body.style.background = '#1a0a0a';
+    }
+
+    function handleYes() {
+      document.getElementById('beMyValentineScreen').classList.remove('active');
+      showValentine();
+    }
+
+    let noClickCount = 0;
+    function handleNo() {
+      noClickCount++;
+      const overlay = document.getElementById('wrongAnswerOverlay');
+      const text = document.getElementById('wrongAnswerText');
+
+      // Show overlay
+      overlay.classList.add('active');
+
+      // Reset animation
+      text.classList.remove('flash');
+      void text.offsetHeight; // trigger reflow
+      text.classList.add('flash');
+
+      // After animation ends, hide overlay and go back to choice
+      setTimeout(() => {
+        overlay.classList.remove('active');
+        text.classList.remove('flash');
+
+        // Make the No button smaller each time she clicks it
+        const noBtn = document.getElementById('noBtn');
+        const currentSize = parseFloat(getComputedStyle(noBtn).fontSize);
+        noBtn.style.fontSize = Math.max(currentSize * 0.7, 8) + 'px';
+        noBtn.style.padding = Math.max(10 - noClickCount * 2, 2) + 'px ' + Math.max(30 - noClickCount * 5, 8) + 'px';
+      }, 5500);
     }
 
     // ========== Show Valentine ==========
