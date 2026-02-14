@@ -363,6 +363,9 @@
       border-color: rgba(136, 96, 96, 0.3);
       font-size: clamp(14px, 2.5vw, 20px);
       padding: 10px 30px;
+      position: relative;
+      transition: transform 0.18s ease, border-color 0.2s ease;
+      will-change: transform;
     }
 
     .bmv-btn-no:hover {
@@ -777,7 +780,7 @@
       <div class="bmv-question">Will you be my<br>Valentine?</div>
       <div class="bmv-buttons">
         <button class="bmv-btn bmv-btn-yes" onclick="handleYes()">Yes</button>
-        <button class="bmv-btn bmv-btn-no" id="noBtn" onclick="handleNo()">No</button>
+        <button class="bmv-btn bmv-btn-no" id="noBtn">No</button>
       </div>
     </div>
   </div>
@@ -798,22 +801,22 @@
       <div class="valentine-heart-icon" id="mainHeart">&#10084;&#65039;</div>
       <div class="valentine-extra">I love you x</div>
       <button class="one-more-thing" id="oneMoreThing" onclick="showPS()">one more thing...</button>
-      <div class="ps-message" id="psMessage">ps. I will reserve somewhere to go out to eat when you get back, but for now, good luck at bucs xx</div>
+      <div class="ps-message" id="psMessage">There is a surprise waiting for you for when you get home x</div>
     </div>
   </div>
 
   <script>
     // ========== Photo filenames ==========
     const photos = [
-      'images/photo1.jpg',
-      'images/photo2.jpg',
-      'images/photo3.png',
-      'images/photo4.png',
-      'images/photo5.jpg',
-      'images/photo6.jpg',
-      'images/photo7.jpg',
-      'images/photo8.png',
-      'images/photo9.jpg',
+      'images/0728A1F5-CBE8-4B6D-947D-0567751119EF.JPG',
+      'images/8ADBD11D-88A6-4F20-AACF-55246CB66E1D 2.JPG',
+      'images/IMG_0938.jpg',
+      'images/IMG_0939.jpg',
+      'images/IMG_4523.JPG',
+      'images/IMG_7016 2.JPG',
+      'images/1ebfbd01-2693-43e0-a85b-828cdcc76ed5.JPG',
+      'images/IMG_0001.jpg',
+      'images/IMG_4446.JPG',
     ];
 
     // Shuffle array
@@ -837,7 +840,7 @@
       cell.setAttribute('tabindex', '0');
       cell.setAttribute('aria-label', 'captcha image ' + (i + 1));
       cell.innerHTML = `
-        <img src="${src}" alt="captcha image ${i + 1}" draggable="false">
+        <img src="${encodeURI(src)}" alt="captcha image ${i + 1}" draggable="false">
         <div class="check-overlay">
           <div class="check-circle">
             <svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>
@@ -891,8 +894,66 @@
     }
 
     // ========== Be My Valentine ==========
+    let noOffsetX = 0;
+    let noOffsetY = 0;
+    let dodgeSetupDone = false;
+
+    function resetNoButtonPosition() {
+      const noBtn = document.getElementById('noBtn');
+      noOffsetX = 0;
+      noOffsetY = 0;
+      noBtn.style.transform = 'translate(0px, 0px)';
+    }
+
+    function moveNoButtonAway() {
+      const noBtn = document.getElementById('noBtn');
+      const container = document.querySelector('.bmv-content');
+      const btnRect = noBtn.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+
+      // Keep movement inside the valentine prompt area.
+      const maxX = Math.max(35, (containerRect.width / 2) - btnRect.width - 10);
+      const maxY = Math.max(30, (containerRect.height / 2) - btnRect.height - 10);
+
+      let nextX = (Math.random() * 2 - 1) * maxX;
+      let nextY = (Math.random() * 2 - 1) * maxY;
+
+      // Avoid tiny moves so it always feels like it escaped.
+      if (Math.abs(nextX - noOffsetX) < 40) nextX += nextX > 0 ? 45 : -45;
+      if (Math.abs(nextY - noOffsetY) < 25) nextY += nextY > 0 ? 30 : -30;
+
+      noOffsetX = Math.max(-maxX, Math.min(maxX, nextX));
+      noOffsetY = Math.max(-maxY, Math.min(maxY, nextY));
+      noBtn.style.transform = `translate(${noOffsetX}px, ${noOffsetY}px)`;
+    }
+
+    function setupNoButtonDodge() {
+      if (dodgeSetupDone) return;
+      dodgeSetupDone = true;
+
+      const noBtn = document.getElementById('noBtn');
+
+      // On desktop: as soon as pointer gets near, move away.
+      noBtn.addEventListener('mouseenter', moveNoButtonAway);
+      noBtn.addEventListener('mousemove', moveNoButtonAway);
+
+      // On touch: move away before tap can land.
+      noBtn.addEventListener('touchstart', (event) => {
+        event.preventDefault();
+        moveNoButtonAway();
+      }, { passive: false });
+
+      // Block actual click on "No".
+      noBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        moveNoButtonAway();
+      });
+    }
+
     function showBeMyValentine() {
       const screen = document.getElementById('beMyValentineScreen');
+      setupNoButtonDodge();
+      resetNoButtonPosition();
       screen.classList.add('active');
       document.body.style.background = '#1a0a0a';
     }
